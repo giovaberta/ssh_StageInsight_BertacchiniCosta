@@ -10,7 +10,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class MainHandler(BaseHandler):
     def get(self):
-        self.render("../frontend/home.html")
+        self.render("../frontend/login.html")
 
     def post(self):
         self.set_header("Content-Type", "application/json")

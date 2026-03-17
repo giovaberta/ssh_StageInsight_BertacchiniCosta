@@ -9,3 +9,7 @@ db = Client["SSH"] # DataBase
 user = db["user"] # Collezzione dove si trovano le informazioni sugli utenti
 # Es: {"name":NomeUtente,"pw":password,"type":0/1/2/3} 0.Proprietario della rete 1.Admin 2.Studente/operatore 3.Guest
 form = db["form"] # Collezione dove si trovano le risposte ai vari form con relativo collegamento all'utente (Se ancora esistente)
+
+# Variabili per il server
+
+port_listener = 8888
