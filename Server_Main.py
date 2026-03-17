@@ -1,12 +1,19 @@
 import tornado,pymongo,asyncio
 from global_var import *
-from BackEnd.Handler import *
+from backend.Handler import *
 
 
 def make_up():
     return tornado.web.Application([
-        (r"/",MainHandler)],
+        (r"/",MainHandler),
+        (r"/login",LoginHandler),
+        (r"/admin",AdminHandler),
+        (r"/guest",GuestHandler),
+        (r"/student",StudentHandler),
+        (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "frontend"})
+        ],
         debug = True,
+        static_path = "frontend",
     )
 
 async def main(shutdown_event):
