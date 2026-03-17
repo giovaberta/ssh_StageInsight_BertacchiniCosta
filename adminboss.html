@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pannello Admin Principale - Questionario PCTO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Area Admin Principale (Boss) - Gestione Completa</h1>
+        <nav>
+            <a href="#gestione-utenti">Gestione Utenti</a>
+            <a href="#statistiche">Statistiche</a>
+            <a href="#modifica-questionario">Modifica Questionario</a>
+            <a href="login.html">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="gestione-utenti">
+            <h2>Gestione Account (Utenti e Admin)</h2>
+            <p>Sezione esclusiva per l'Admin Principale per creare ed eliminare gli account degli studenti (User) e degli amministratori (Admin).</p>
+
+            <div class="user-management-actions">
+                <button type="button">Crea Nuovo Utente</button>
+                <button type="button">Crea Nuovo Admin</button>
+            </div>
+
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Ruolo</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>mario.rossi@studenti.it</td>
+                        <td>User</td>
+                        <td><button type="button" class="delete-btn">Elimina</button></td>
+                    </tr>
+                    <tr>
+                        <td>prof.bianchi@scuola.it</td>
+                        <td>Admin</td>
+                        <td><button type="button" class="delete-btn">Elimina</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="statistiche">
+            <h2>Statistiche PCTO</h2>
+            <p>Qui potrai visualizzare i grafici sulle valutazioni e i dati raccolti (stessa vista degli Admin normali).</p>
+            <div id="grafici-container" class="chart-area">
+                <p><em>[Area riservata ai grafici generati da JavaScript]</em></p>
+            </div>
+        </section>
+
+        <section id="modifica-questionario">
+            <h2>Modifica il Questionario</h2>
+            <p>Sezione per aggiungere, modificare o rimuovere le domande del questionario sottoposto agli studenti.</p>
+            <div id="editor-domande">
+                <button type="button">Aggiungi Nuova Domanda</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
