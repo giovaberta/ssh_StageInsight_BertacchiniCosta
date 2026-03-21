@@ -1,6 +1,8 @@
 import tornado.web, hashlib
 import sys , os
 
+from ssh_StageInsight_BertacchiniCosta.global_var import user
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from global_var  import *
@@ -58,10 +60,28 @@ class LoginHandler(BaseHandler):
             self.write_err("Type not supported",404)
 
 class AdminHandler(BaseHandler):
-    pass
+    def get(self):
+        self.render("../frontend/adminboss.html")
+
+    async def post(self):
+        email = self.get_argument("email")
+        pwd = self.get_argument("pwd")
+        type_user = self.get_argument("type")
+        alredy_exist = await  user.find_one({"email":email})
+        if alredy_exist:
+            self.write_err("Email already exists",409)
+            return
+        ins = await user.insert_one({"email":email,"pwd":hashlib.sha3_512(pwd.encode(),usedforsecurity=True).hexdigest(),"type":type_user})
+        if not ins:
+            self.write_err("DataBase error",401)
+            return
+
+
 
 class GuestHandler(BaseHandler):
-    pass
+    def get(self):
+        self.render("../frontend/admin.html")
 
 class StudentHandler(BaseHandler):
-    pass
+    def get(self):
+        self.render("../frontend/user.html")
