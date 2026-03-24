@@ -1,7 +1,7 @@
 import tornado.web, hashlib
 import sys , os
 
-from ssh_StageInsight_BertacchiniCosta.global_var import user
+from ssh_StageInsight_BertacchiniCosta.global_var import user, Current_user
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -49,6 +49,8 @@ class LoginHandler(BaseHandler):
             self.write_err("Password doesn't match",401)
             return
 
+        Current_user = Utente
+
         self.set_status(200)
         if Utente["type"] == 0:
             self.redirect(f"/admin?id={Utente['_id']}")
@@ -64,6 +66,7 @@ class AdminHandler(BaseHandler):
         self.render("../frontend/adminboss.html")
 
     async def post(self):
+        self.set_header("Content-Type", "application/json")
         email = self.get_argument("email")
         pwd = self.get_argument("pwd")
         type_user = self.get_argument("type")
@@ -85,3 +88,22 @@ class GuestHandler(BaseHandler):
 class StudentHandler(BaseHandler):
     def get(self):
         self.render("../frontend/user.html")
+
+    async def post(self):
+        self.set_header("Content-Type", "application/json")
+        keys = list(self.request.body_arguments.keys())
+        for key in keys:
+            print(key)
+
+            arg = self.get_argument(key)
+            print(arg)
+            if arg != "":
+                self.write_err("Missing argument",401)
+            #{$exisists : True}
+            question = await form.find_one({}, {key: 1, "_id": 0})
+            #question = await form.find_one({key})
+            if question != None:
+                self.write("Critical error")
+            print(question)
+            #question[str(Current_user["_id"])] = arg
+            #await form.upgrade({key:question})
