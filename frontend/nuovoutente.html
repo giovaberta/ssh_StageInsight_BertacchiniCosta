@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crea Nuovo Account - PCTO</title>
+    <link rel="stylesheet" href="{{static_url('style.css')}}">
+    <style>
+        .create-container { max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        .create-container input, .create-container select, .create-container button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
+        .btn-cancel { background-color: #ccc; color: #333; }
+        .btn-cancel:hover { background-color: #bbb; }
+    </style>
+</head>
+<body>
+    <div class="create-container">
+        <h2>Aggiungi un nuovo account</h2>
 
+        <div id="error-message" style="color: red; margin-bottom: 10px; display: none;"></div>
+
+        <form id="createAccountForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="pwd">Password:</label>
+            <input type="password" id="pwd" name="pwd" required>
+
+            <label for="type">Ruolo dell'utente:</label>
+            <select id="type" name="type" required>
+                <option value="2">Studente (User)</option>
+                <option value="1">Admin Normale (Guest)</option>
+                <option value="0">Admin Principale (Boss)</option>
+            </select>
+
+            <button type="submit">Crea Account</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='/admin'">Annulla e Torna Indietro</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+
+            const form = e.target;
+            const formData = new URLSearchParams(new FormData(form)); 
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/admin', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                if (response.ok) {
+                    alert("Account creato con successo nel database!");
+                    window.location.href = '/admin'; 
+                } else {
+                    const data = await response.json();
+                    errorDiv.textContent = "Errore: " + (data.error || "Creazione fallita.");
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = "Errore di connessione al server.";
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
