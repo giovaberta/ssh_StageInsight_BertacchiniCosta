@@ -19,7 +19,7 @@ class BaseHandler(tornado.web.RequestHandler):
 # Handler che renderizza la pagina principale per il login
 class MainHandler(BaseHandler):
     def get(self):
-        self.render("../frontend/login.html")
+        self.render("../frontend/login.html", error_message = None)
 
 # Handler che gestisce il login degli utenti
 class LoginHandler(BaseHandler):
@@ -42,7 +42,8 @@ class LoginHandler(BaseHandler):
             return
 
         if Utente == None:
-            self.write_err("User not found",401)
+            #self.redirect("../frontend/login.html", error_message="Username o Password errati!")
+            self.write_err("Username o Password errati!")
             return
 
         if not Utente["pwd"] == pwd_cript.hexdigest():
@@ -83,7 +84,7 @@ class AdminHandler(BaseHandler):
 
 class GuestHandler(BaseHandler):
     def get(self):
-        self.render("../frontend/admin.html")
+        self.render("../frontend/guest.html")
 
 class StudentHandler(BaseHandler):
     def get(self):
@@ -95,15 +96,14 @@ class StudentHandler(BaseHandler):
         for key in keys:
             print(key)
 
-            arg = self.get_argument(key)
+            arg = self.get_argument(key).strip(" ")
             print(arg)
-            if arg != "":
+            if arg == "":
                 self.write_err("Missing argument",401)
-            #{$exisists : True}
-            question = await form.find_one({}, {key: 1, "_id": 0})
-            #question = await form.find_one({key})
-            if question != None:
-                self.write("Critical error")
+            # Controllo che la domanda esista e la prendo con tutto il suo contenuto
+            question = await form.find_one({key : {"$exists" : True}})
+            if question == None:
+                self.write_err("Critical error")
             print(question)
             #question[str(Current_user["_id"])] = arg
             #await form.upgrade({key:question})
