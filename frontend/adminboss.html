@@ -23,11 +23,9 @@
             <p>Sezione esclusiva per l'Admin Principale per creare ed eliminare gli account degli studenti (User) e degli amministratori (Admin).</p>
 
             <div class="user-management-actions">
-                <button type="button">Crea Nuovo Utente</button>
-                <button type="button">Crea Nuovo Admin</button>
+                <button type="button" onclick="window.location.href='/nuovoutente'">Crea Nuovo Account</button>
             </div>
 
-            <!-- Tabella fittizia per visualizzare gli utenti -->
             <table class="user-table">
                 <thead>
                     <tr>
@@ -38,12 +36,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>mario.rossi@studenti.it</td>
+                        <td class="user-email">mario.rossi@studenti.it</td>
                         <td>User</td>
                         <td><button type="button" class="delete-btn">Elimina</button></td>
                     </tr>
                     <tr>
-                        <td>prof.bianchi@scuola.it</td>
+                        <td class="user-email">prof.bianchi@scuola.it</td>
                         <td>Admin</td>
                         <td><button type="button" class="delete-btn">Elimina</button></td>
                     </tr>
@@ -53,24 +51,48 @@
 
         <section id="statistiche">
             <h2>Statistiche PCTO</h2>
-            <p>Qui potrai visualizzare i grafici sulle valutazioni e i dati raccolti (stessa vista degli Admin normali).</p>
-            <!-- Div dove verranno generati i grafici tramite JS -->
+            <p>Qui potrai visualizzare i grafici sulle valutazioni e i dati raccolti.</p>
             <div id="grafici-container" class="chart-area">
                 <p><em>[Area riservata ai grafici generati da JavaScript]</em></p>
-                <!-- Es. <canvas id="myChart"></canvas> -->
             </div>
         </section>
 
         <section id="modifica-questionario">
             <h2>Modifica il Questionario</h2>
             <p>Sezione per aggiungere, modificare o rimuovere le domande del questionario sottoposto agli studenti.</p>
-            <div id="editor-domande">
-                <!-- Placeholder editor domande -->
-                <button type="button">Aggiungi Nuova Domanda</button>
+            <div id="editor-domande" class="user-management-actions">
+                <button type="button" onclick="window.location.href='/modificaquestionario'">Gestisci Domande</button>
             </div>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script>
+        document.querySelector('.user-table').addEventListener('click', async function(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                const row = e.target.closest('tr');
+                const email = row.querySelector('.user-email').textContent.trim();
+
+                if (!confirm(`Vuoi davvero eliminare l'account: ${email}?`)) return;
+
+                try {
+                    const response = await fetch('/admin', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ 'email': email })
+                    });
+
+                    if (response.ok) {
+                        alert("Account eliminato!");
+                        row.remove();
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        alert("Errore durante l'eliminazione: " + (data.error || "Operazione fallita"));
+                    }
+                } catch (err) {
+                    alert("Errore di connessione al server.");
+                }
+            }
+        });
+    </script>
 </body>
 </html>
