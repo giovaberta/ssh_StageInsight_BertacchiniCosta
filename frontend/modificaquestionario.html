@@ -1,1 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifica Questionario - PCTO</title>
+    <link rel="stylesheet" href="{{static_url('style.css')}}">
+    <style>
+        .question-container { max-width: 1000px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .form-section { margin-bottom: 30px; padding: 20px; background-color: #f1f8ff; border: 1px solid #cce5ff; border-radius: 5px; }
+        .form-section h3 { margin-top: 0; color: #0056b3; }
+        .form-section input, .form-section select, .form-section button { margin-bottom: 15px; width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-add { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { background-color: #218838; }
+        .btn-cancel { background-color: #6c757d; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 4px; width: 100%; font-weight: bold; margin-top: 20px; }
+        .btn-cancel:hover { background-color: #5a6268; }
 
+        .list-section { max-height: 600px; overflow-y: auto; border: 1px solid #ddd; }
+        .question-table { width: 100%; border-collapse: collapse; background: white; }
+        .question-table th, .question-table td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; }
+        .question-table th { background-color: #007bff; color: white; position: sticky; top: 0; }
+        .question-table tr:nth-child(even) { background-color: #f9f9f9; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 3px; font-weight: bold; }
+        .delete-btn:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="question-container">
+        <h2>Gestione Domande Questionario PCTO</h2>
+        <p>Aggiungi o rimuovi le domande che compongono il questionario per l'Area Studente.</p>
+
+        <div class="form-section">
+            <h3>Aggiungi Nuova Domanda</h3>
+            <div id="error-message" style="color: red; margin-bottom: 10px; display: none;"></div>
+
+            <form id="addQuestionForm">
+                <label for="testo_domanda">Testo della Domanda:</label>
+                <input type="text" id="testo_domanda" name="testo_domanda" placeholder="Es: Come valuti l'organizzazione generale?" required>
+
+                <label for="tipo_risposta">Tipo di Risposta attesa:</label>
+                <select id="tipo_risposta" name="tipo_risposta" required>
+                    <option value="testo_breve">Testo Breve (Input)</option>
+                    <option value="testo_lungo">Testo Lungo (Textarea)</option>
+                    <option value="si_no">Scelta: Sì / No (Radio)</option>
+                    <option value="scala_valutazione">Scala: Moltissimo -> Poco per nulla</option>
+                    <option value="scelta_multipla">Scelta Multipla (Checkbox)</option>
+                    <option value="menu_tendina">Menu a tendina (Select)</option>
+                </select>
+
+                <button type="submit" class="btn-add">+ Salva Domanda nel Questionario</button>
+            </form>
+        </div>
+
+        <h3>Domande Attuali nel Questionario</h3>
+        <div class="list-section">
+            <table class="question-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Testo Domanda</th>
+                        <th>Tipo Risposta</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="questionsTableBody">
+                    <tr><td>1</td><td class="q-text">Dati dell'ETS:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>2</td><td class="q-text">Dati dell'alunn*:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>3</td><td class="q-text">Se sei uno studente specifica il tuo percorso:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>4</td><td class="q-text">È la prima esperienza di volontariato e cittadinanza?</td><td>Sì / No</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>5</td><td class="q-text">Dove o da chi hai ricevuto le informazioni per poter fare questa esperienza?</td><td>Menu a tendina</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>6</td><td class="q-text">Quali sono le motivazioni personali che ti hanno spinto a fare questa esperienza?</td><td>Scelta Multipla (Checkbox)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>7</td><td class="q-text">Che ruolo hai avuto durante lo stage?</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>8</td><td class="q-text">Credi di essere riuscit* a rispettare orari, appuntamenti, impegni e scadenze?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>9</td><td class="q-text">Ritieni di essere migliorat* nella tua capacità di portare a termine gli incarichi assegnati?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>10</td><td class="q-text">Quanto sei riuscit* a lavorare in gruppo?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>11</td><td class="q-text">Quanto sei riuscit* a comprendere gli stati d'animo e le emozioni altrui (empatia)?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>12</td><td class="q-text">Quanto sei riuscit* ad ascoltare ed accettare i punti di vista diversi dai tuoi?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>13</td><td class="q-text">Sei riuscit* a comunicare in modo efficace?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>14</td><td class="q-text">Sei riuscit* ad affrontare e gestire gli imprevisti?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>15</td><td class="q-text">Sei riuscit* a chiedere aiuto quando non sapevi fare qualcosa?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>16</td><td class="q-text">Quanto questa esperienza ti ha incuriosit* e motivat*?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>17</td><td class="q-text">Le tue competenze (relazionali, informatiche, linguistiche, ecc) ti sono state utili in questa esperienza?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>18</td><td class="q-text">Ci sono altre cose che hai imparato/sviluppato non elencate sopra che vuoi dirci?</td><td>Testo Lungo</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>19</td><td class="q-text">Quanto è cresciuta la tua capacità di comunicare in modo efficace?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>20</td><td class="q-text">Cosa pensi di aver imparato dall’esperienza di stage?</td><td>Scelta Multipla (Checkbox)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>21</td><td class="q-text">In quale contesto pensi che potresti spendere le competenze che hai sviluppato?</td><td>Scelta Multipla (Checkbox)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>22</td><td class="q-text">Quanto reputi interessanti i seguenti aspetti dell'attività di volontariato?</td><td>Scelta Multipla (Checkbox)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>23</td><td class="q-text">Quanto ti senti a tuo agio e felice in classe?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>24</td><td class="q-text">Quanto pensi che le regole della scuola siano importanti e giuste?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>25</td><td class="q-text">Quanto ti senti parte di un gruppo di amici e compagni di classe?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>26</td><td class="q-text">Quanto sei soddisfatto dei tuoi voti?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>27</td><td class="q-text">Quanto riesci a relazionarti con gli altri in classe e a lavorare in gruppo?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>28</td><td class="q-text">Quanto pensi di conoscere i tuoi bisogni e desideri?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                    <tr><td>29</td><td class="q-text">Quanto ti senti supportato dalla tua famiglia?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button type="button" class="btn-cancel" onclick="window.location.href='/admin'">Torna al Pannello Principale</button>
+    </div>
+
+    <script>
+        document.getElementById('addQuestionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new URLSearchParams(new FormData(form));
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/domande', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                if (response.ok) {
+                    alert("Domanda aggiunta con successo!");
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    errorDiv.textContent = "Errore: " + (data.error || "Impossibile salvare la domanda.");
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = "Errore di connessione al server.";
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        document.querySelector('.question-table').addEventListener('click', async function(e) {
+            if (e.target.classList.contains('delete-btn')) {
+                const row = e.target.closest('tr');
+                const textDomanda = row.querySelector('.q-text').textContent.trim();
+
+                if (!confirm(`Sei sicuro di voler eliminare definitivamente questa domanda?\n\n"${textDomanda}"`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/domande', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ 'testo_domanda': textDomanda })
+                    });
+
+                    if (response.ok) {
+                        alert("Domanda eliminata!");
+                        row.remove();
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        alert("Errore durante l'eliminazione: " + (data.error || "Operazione fallita"));
+                    }
+                } catch (err) {
+                    alert("Errore di connessione al server.");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
