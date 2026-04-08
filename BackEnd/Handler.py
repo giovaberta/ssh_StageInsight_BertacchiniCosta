@@ -1,7 +1,7 @@
 import tornado.web, hashlib
 import sys , os
 
-from ssh_StageInsight_BertacchiniCosta.global_var import user, Current_user
+#from ssh_StageInsight_BertacchiniCosta.global_var import user, Current_user
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -107,3 +107,10 @@ class StudentHandler(BaseHandler):
             print(question)
             #question[str(Current_user["_id"])] = arg
             #await form.upgrade({key:question})
+
+class NewStudentHandler(BaseHandler):
+    def get(self):
+        self.render("../frontend/nuovoutente.html")
+
+    def post(self):
+        pass

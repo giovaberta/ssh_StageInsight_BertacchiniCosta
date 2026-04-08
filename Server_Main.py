@@ -8,9 +8,10 @@ def make_up():
         (r"/",MainHandler),
         (r"/login",LoginHandler),
         (r"/admin",AdminHandler),
-        (r"/admin/newus",AdminHandler),
+        (r"/admin/newus",NewStudentHandler),
         (r"/guest",GuestHandler),
         (r"/student",StudentHandler),
+        (r"/newstudent",NewStudentHandler),
         (r"/frontend/(.*)", tornado.web.StaticFileHandler, {"path": "frontend"})
         ],
         debug = True,
