@@ -3,4 +3,4 @@ Progetto ssh dell'anno 2025/2026 per l'istituto E.Fermi Modena dagli studenti Be
 ## Scopo del progetto
 Il progetto ha scopo di una applicazione web con accesso a 3 diverse tipologie di account : Admin/Studenti/Guest
 ### Metido per la criptazione
-Utilizzo della libbreria hashlib che cripta in manuera irreversibile un dato 
+Utilizzo della libreria hashlib che cripta in manuera irreversibile un dato 
