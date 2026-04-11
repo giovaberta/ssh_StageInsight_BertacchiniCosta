@@ -12,6 +12,7 @@ def make_up():
         (r"/guest",GuestHandler),
         (r"/student",StudentHandler),
         (r"/newstudent",NewStudentHandler),
+        (r"/form",FormHandler),
         (r"/frontend/(.*)", tornado.web.StaticFileHandler, {"path": "frontend"})
         ],
         debug = True,
