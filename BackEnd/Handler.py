@@ -114,3 +114,13 @@ class NewStudentHandler(BaseHandler):
 
     def post(self):
         pass
+
+class FormHandler(BaseHandler):
+    def get(self):
+        self.render("../frontend/modificaquestionario.html")
+
+    def post(self):
+        print(self.request.body_arguments.keys())
+
+    def delete(self):
+        print(self.request.body_arguments.keys())
