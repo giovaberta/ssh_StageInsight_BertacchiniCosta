@@ -24,6 +24,7 @@ class MainHandler(BaseHandler):
 # Handler che gestisce il login degli utenti
 class LoginHandler(BaseHandler):
     async def post(self):
+        global Current_user
         self.set_header("Content-Type", "application/json")
 
         email = self.get_argument("email")
@@ -50,7 +51,9 @@ class LoginHandler(BaseHandler):
             self.write_err("Password doesn't match",401)
             return
 
+
         Current_user = Utente
+        print(Current_user)
 
         self.set_status(200)
         if Utente["type"] == 0:
@@ -91,6 +94,7 @@ class StudentHandler(BaseHandler):
         self.render("../frontend/user.html")
 
     async def post(self):
+        global Current_user
         self.set_header("Content-Type", "application/json")
         keys = list(self.request.body_arguments.keys())
         for key in keys:
@@ -102,11 +106,11 @@ class StudentHandler(BaseHandler):
                 self.write_err("Missing argument",401)
             # Controllo che la domanda esista e la prendo con tutto il suo contenuto
             question = await form.find_one({key : {"$exists" : True}})
-            if question == None:
-                self.write_err("Critical error")
+
             print(question)
-            #question[str(Current_user["_id"])] = arg
-            #await form.upgrade({key:question})
+            print(Current_user)
+            question['dati_ets']['risp'][str(Current_user['_id'])] = arg
+            await form.upgrade_one({key:question})
 
 class NewStudentHandler(BaseHandler):
     def get(self):
