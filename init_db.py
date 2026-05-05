@@ -50,6 +50,7 @@ async def make_up():
         {"soddisfazione_voti": {"type": "scala_valutazione", "risp": {}}},
         {"relazioni_classe": {"type": "scala_valutazione", "risp": {}}},
         {"conoscenza_bisogni": {"type": "scala_valutazione", "risp": {}}},
-        {"supporto_famiglia": {"type": "scala_valutazione", "risp": {}}}
+        {"supporto_famiglia": {"type": "scala_valutazione", "risp": {}}},
+        {"gestione_imprevisti": {"type": "scala_valutazione", "risp": {}}}
     ])
 asyncio.run(make_up())

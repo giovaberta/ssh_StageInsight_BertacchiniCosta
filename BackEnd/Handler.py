@@ -1,5 +1,6 @@
 import tornado.web, hashlib
 import sys , os
+from bson.objectid import ObjectId
 
 #from ssh_StageInsight_BertacchiniCosta.global_var import user, Current_user
 
@@ -7,14 +8,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from global_var  import *
 
-
 class BaseHandler(tornado.web.RequestHandler):
+    def get_current_user(self):
+        return self.get_secure_cookie("user_id")
     def write_msg(self,msg,status = 200):
         self.set_status(status)
         self.write(msg)
     def write_err(self,error,status = 500):
         self.set_status(status)
-        self.write({"error": error})
+        self.write({"error": str(error)})
 
 # Handler che renderizza la pagina principale per il login
 class MainHandler(BaseHandler):
@@ -52,8 +54,8 @@ class LoginHandler(BaseHandler):
             return
 
 
-        Current_user = Utente
-        print(Current_user)
+        self.set_secure_cookie("user_id", str(Utente["_id"]))
+
 
         self.set_status(200)
         if Utente["type"] == 0:
@@ -82,7 +84,7 @@ class AdminHandler(BaseHandler):
         if not ins:
             self.write_err("DataBase error",401)
             return
-
+        self.write_msg({"success": "User created successfully"}, 201)
 
 
 class GuestHandler(BaseHandler):
@@ -92,25 +94,134 @@ class GuestHandler(BaseHandler):
 class StudentHandler(BaseHandler):
     def get(self):
         self.render("../frontend/user.html")
-
+    """
     async def post(self):
-        global Current_user
         self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized: user not logged in", 401)
+            return
+
+        Current_user = await user.find_one({"_id": ObjectId(user_id.decode())})
+        if Current_user is None:
+            self.write_err("User not found", 404)
+            return
+
         keys = list(self.request.body_arguments.keys())
         for key in keys:
-            print(key)
-
-            arg = self.get_argument(key).strip(" ")
+            arg = self.get_argument(key).strip()
             print(arg)
             if arg == "":
-                self.write_err("Missing argument",401)
-            # Controllo che la domanda esista e la prendo con tutto il suo contenuto
-            question = await form.find_one({key : {"$exists" : True}})
+                self.write_err(f"Missing value for argument '{key}'", 400)
+                return
 
-            print(question)
-            print(Current_user)
-            question['dati_ets']['risp'][str(Current_user['_id'])] = arg
-            await form.upgrade_one({key:question})
+            question = await form.find_one({key: {"$exists": True}})
+            if question is None:
+                self.write_err(f"Question '{key}' not found", 404)
+                return
+
+            risp = await form.update_one(
+                {"_id": question["_id"]},
+                {"$set": {f"dati_ets.risp.{str(Current_user['_id'])}": arg}}
+            )
+            print(risp)
+
+        self.write_msg({"success": "Answers saved successfully"}, 200)
+    """
+    async def post(self):
+        self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized: user not logged in", 401)
+            return
+
+        Current_user = await user.find_one({"_id": ObjectId(user_id.decode())})
+        if Current_user is None:
+            self.write_err("User not found", 404)
+            return
+
+        try:
+            # Legge il body JSON invece di form-urlencoded
+            data = tornado.escape.json_decode(self.request.body)
+        except Exception:
+            self.write_err("Invalid JSON body", 400)
+            return
+
+        for field_name, arg in data.items():
+            if not isinstance(arg, str) or arg.strip() == "":
+                self.write_err(f"Valore mancante per il campo '{field_name}'", 400)
+                return
+
+            # Recupera la domanda dal DB tramite indice (domanda_1, domanda_2...)
+            index = int(field_name.split("_")[1]) - 1
+            domande = await form.find().to_list(length=None)
+
+            if index >= len(domande):
+                self.write_err(f"Domanda '{field_name}' non trovata", 404)
+                return
+
+            question = domande[index]
+
+            await form.update_one(
+                {"_id": question["_id"]},
+                {"$set": {f"dati_ets.risp.{str(Current_user['_id'])}": arg.strip()}}
+            )
+
+        self.write_msg({"success": "Questionario inviato con successo"}, 200)
+
+class UserListHandler(BaseHandler):
+    async def get(self):
+        self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized", 401)
+            return
+
+        try:
+            # Recupera tutti gli utenti dal DB
+            utenti = await user.find().to_list(length=None)
+
+            type_map = {0: "Admin", 1: "Guest", 2: "Student"}
+
+            risultato = [
+                {
+                    "id": str(u["_id"]),
+                    "email": u["email"],
+                    "type": type_map.get(int(u["type"]), "Unknown")
+                }
+                for u in utenti
+            ]
+            self.write({"users": risultato})
+        except Exception as ex:
+            self.write_err(str(ex))
+
+    async def delete(self):
+        self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized", 401)
+            return
+
+        try:
+            data = tornado.escape.json_decode(self.request.body)
+            target_id = data.get("id")
+            if not target_id:
+                self.write_err("Missing user id", 400)
+                return
+
+            result = await user.delete_one({"_id": ObjectId(target_id)})
+            if result.deleted_count == 0:
+                self.write_err("User not found", 404)
+                return
+
+            self.write_msg({"success": "User deleted"}, 200)
+        except Exception as ex:
+            self.write_err(str(ex))
+
 
 class NewStudentHandler(BaseHandler):
     def get(self):
@@ -121,10 +232,88 @@ class NewStudentHandler(BaseHandler):
 
 class FormHandler(BaseHandler):
     def get(self):
-        self.render("../frontend/modificaquestionario.html")
+        # Se la richiesta vuole JSON (fetch dal JS), restituisce le domande
+        if "application/json" in self.request.headers.get("Accept", ""):
+            self.get_questions()
+        else:
+            self.render("../frontend/modificaquestionario.html")
 
-    def post(self):
-        print(self.request.body_arguments.keys())
+    async def get_questions(self):
+        self.set_header("Content-Type", "application/json")
 
-    def delete(self):
-        print(self.request.body_arguments.keys())
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized", 401)
+            return
+
+        try:
+            domande = await form.find().to_list(length=None)
+            risultato = [
+                {
+                    "testo_domanda": d.get("testo_domanda", ""),
+                    "tipo_risposta": d.get("tipo_risposta", "")
+                }
+                for d in domande
+            ]
+            self.write(risultato)
+        except Exception as ex:
+            self.write_err(str(ex))
+
+    async def post(self):
+        self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized", 401)
+            return
+
+        testo_domanda = self.get_argument("testo_domanda", "").strip()
+        tipo_risposta = self.get_argument("tipo_risposta", "").strip()
+
+        if not testo_domanda or not tipo_risposta:
+            self.write_err("Campi mancanti", 400)
+            return
+
+        # Controlla se la domanda esiste già
+        existing = await form.find_one({"testo_domanda": testo_domanda})
+        if existing:
+            self.write_err("Domanda già esistente", 409)
+            return
+
+        try:
+            await form.insert_one({
+                "testo_domanda": testo_domanda,
+                "tipo_risposta": tipo_risposta,
+                "dati_ets": {"risp": {}}  # struttura per le risposte degli studenti
+            })
+            self.write_msg({"success": "Domanda salvata"}, 201)
+        except Exception as ex:
+            self.write_err(str(ex))
+
+    async def delete(self):
+        self.set_header("Content-Type", "application/json")
+
+        user_id = self.get_current_user()
+        if user_id is None:
+            self.write_err("Unauthorized", 401)
+            return
+
+        testo_domanda = self.get_argument("testo_domanda", "").strip()
+        tipo_risposta = self.get_argument("tipo_risposta", "").strip()
+
+        if not testo_domanda:
+            self.write_err("Testo domanda mancante", 400)
+            return
+
+        try:
+            result = await form.delete_one({
+                "testo_domanda": testo_domanda,
+                "tipo_risposta": tipo_risposta
+            })
+            if result.deleted_count == 0:
+                self.write_err("Domanda non trovata", 404)
+                return
+
+            self.write_msg({"success": "Domanda eliminata"}, 200)
+        except Exception as ex:
+            self.write_err(str(ex))

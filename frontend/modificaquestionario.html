@@ -41,7 +41,7 @@
                 <select id="tipo_risposta" name="tipo_risposta" required>
                     <option value="testo_breve">Testo Breve (Input)</option>
                     <option value="testo_lungo">Testo Lungo (Textarea)</option>
-                    <option value="si_no">Scelta: S� / No (Radio)</option>
+                    <option value="si_no">Scelta: Sì / No (Radio)</option>
                     <option value="scala_valutazione">Scala: Moltissimo -> Poco per nulla</option>
                     <option value="scelta_multipla">Scelta Multipla (Checkbox)</option>
                     <option value="menu_tendina">Menu a tendina (Select)</option>
@@ -99,7 +99,7 @@
         <button type="button" class="btn-cancel" onclick="window.location.href='/admin'">Torna al Pannello Principale</button>
     </div>
 
-    <script>
+    <script>/*
         const TIPO_LABEL = {
             testo_breve:       "Testo Breve",
             testo_lungo:       "Testo Lungo",
@@ -246,7 +246,35 @@
             }
         });
  
-        loadQuestions();
+        loadQuestions();*/
+    document.getElementById('questionsTableBody').addEventListener('click', async function(e) {
+        if (!e.target.classList.contains('delete-btn')) return;
+
+        const row = e.target.closest('tr');
+        const testo_domanda = row.querySelector('.q-text').textContent.trim();
+        const tipo_risposta = row.querySelector('.q-tipo').dataset.value;
+
+        if (!confirm(`Eliminare definitivamente questa domanda?\n\n"${testo_domanda}"`)) return;
+
+        try {
+            // FIX: parametri nell'URL per compatibilità con tornado.get_argument() in DELETE
+            const params = new URLSearchParams({ testo_domanda, tipo_risposta });
+            const response = await fetch(`/form?${params}`, {
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                row.remove();
+                renumberRows();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                alert("Errore durante l'eliminazione: " + (data.error || "Operazione fallita."));
+            }
+        } catch (err) {
+            alert("Errore di connessione al server.");
+        }
+    });
     </script>
 </body>
 </html>

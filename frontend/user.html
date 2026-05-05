@@ -20,10 +20,10 @@
         <section id="questionario-section">
             <h2>Compila il tuo questionario</h2>
             <p>Benvenuto! Qui potrai valutare la tua esperienza di stage PCTO. Ricorda che il questionario può essere compilato una sola volta.</p>
-
+            <!--
             <form id="pctoForm" action="/student" method="POST">
 
-                <!-- Dati Generali -->
+
                 <fieldset>
                     <legend>Dati Generali</legend>
                     <div class="form-group">
@@ -50,7 +50,7 @@
                     </div>
                 </fieldset>
 
-                <!-- Dettagli sull'Esperienza -->
+
                 <fieldset>
                     <legend>Dettagli sull'Esperienza</legend>
                     <div class="form-group">
@@ -87,7 +87,6 @@
                     </div>
                 </fieldset>
 
-                <!-- Valutazione Competenze -->
                 <fieldset>
                     <legend>Valutazione delle Competenze</legend>
                     <p class="fieldset-desc">(Moltissimo, Molto, Abbastanza, Poco per nulla)</p>
@@ -203,7 +202,7 @@
                     </div>
                 </fieldset>
 
-                <!-- Apprendimento e Sviluppo -->
+
                 <fieldset>
                     <legend>Apprendimento e Sviluppo</legend>
                     <div class="form-group">
@@ -261,7 +260,7 @@
                     </div>
                 </fieldset>
 
-                <!-- Vita Scolastica e Personale -->
+
                 <fieldset>
                     <legend>Vita Scolastica e Personale</legend>
                     <p class="fieldset-desc">Quanto sei soddisfatto/a dei seguenti aspetti della tua vita scolastica e personale? (Moltissimo, Molto, Abbastanza, Poco per nulla)</p>
@@ -347,10 +346,228 @@
                 <div class="form-actions">
                     <button type="submit" class="submit-btn">Invia Questionario Completo</button>
                 </div>
-            </form>
+            </form> -->
+
+            <form id="pctoForm" action="/student" method="POST">
+            <div id="form-loading" style="text-align:center; padding:40px; color:#555;">
+                Caricamento domande in corso...
+            </div>
+            <div id="form-content"></div>
+            <div class="form-actions" id="form-actions" style="display:none;">
+                <button type="submit" class="submit-btn">Invia Questionario Completo</button>
+            </div>
+        </form>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script>
+    // Mappa tipo_risposta → builder HTML
+    const TIPO_LABEL = {
+        testo_breve:       "Testo Breve",
+        testo_lungo:       "Testo Lungo",
+        si_no:             "Sì / No",
+        scala_valutazione: "Scala (Moltissimo→Poco)",
+        scelta_multipla:   "Scelta Multipla",
+        menu_tendina:      "Menu a tendina"
+    };
+
+    // Opzioni scala fisse
+    const SCALA_OPTIONS = ["Moltissimo", "Molto", "Abbastanza", "Poco per nulla"];
+
+    // Costruisce il campo HTML in base al tipo
+    function buildField(domanda, index) {
+        // Usa il testo della domanda come name (sanitizzato)
+        const fieldName = `domanda_${index}`;
+        const testo = domanda.testo_domanda;
+        const tipo  = domanda.tipo_risposta;
+
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.dataset.fieldName = fieldName;
+        div.dataset.testo     = testo;
+        div.dataset.tipo      = tipo;
+
+        const label = document.createElement('label');
+        label.textContent = testo;
+        div.appendChild(label);
+
+        switch (tipo) {
+
+            case 'testo_breve': {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = fieldName;
+                div.appendChild(input);
+                break;
+            }
+
+            case 'testo_lungo': {
+                const textarea = document.createElement('textarea');
+                textarea.name = fieldName;
+                textarea.rows = 4;
+                div.appendChild(textarea);
+                break;
+            }
+
+            case 'si_no': {
+                const group = document.createElement('div');
+                group.className = 'radio-group';
+                ['Sì', 'No'].forEach(val => {
+                    const lbl = document.createElement('label');
+                    const radio = document.createElement('input');
+                    radio.type  = 'radio';
+                    radio.name  = fieldName;
+                    radio.value = val;
+                    lbl.appendChild(radio);
+                    lbl.append(` ${val}`);
+                    group.appendChild(lbl);
+                });
+                div.appendChild(group);
+                break;
+            }
+
+            case 'scala_valutazione': {
+                const select = document.createElement('select');
+                select.name = fieldName;
+                const empty = document.createElement('option');
+                empty.value = '';
+                empty.textContent = '-- Seleziona --';
+                select.appendChild(empty);
+                SCALA_OPTIONS.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value       = opt;
+                    option.textContent = opt;
+                    select.appendChild(option);
+                });
+                div.appendChild(select);
+                break;
+            }
+
+            case 'scelta_multipla': {
+                const group = document.createElement('div');
+                group.className = 'checkbox-group';
+                // Le opzioni extra sono salvate in domanda.opzioni (array)
+                const opzioni = domanda.opzioni || [];
+                opzioni.forEach(val => {
+                    const lbl = document.createElement('label');
+                    const cb  = document.createElement('input');
+                    cb.type  = 'checkbox';
+                    cb.name  = fieldName;
+                    cb.value = val;
+                    lbl.appendChild(cb);
+                    lbl.append(` ${val}`);
+                    group.appendChild(lbl);
+                });
+                div.appendChild(group);
+                break;
+            }
+
+            case 'menu_tendina': {
+                const select = document.createElement('select');
+                select.name = fieldName;
+                const empty = document.createElement('option');
+                empty.value = '';
+                empty.textContent = '-- Seleziona --';
+                select.appendChild(empty);
+                const opzioni = domanda.opzioni || [];
+                opzioni.forEach(val => {
+                    const option = document.createElement('option');
+                    option.value       = val;
+                    option.textContent = val;
+                    select.appendChild(option);
+                });
+                div.appendChild(select);
+                break;
+            }
+
+            default: {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = fieldName;
+                div.appendChild(input);
+            }
+        }
+
+        return div;
+    }
+
+    // Carica le domande dal DB e costruisce il form
+    async function loadForm() {
+        const content = document.getElementById('form-content');
+        const loading = document.getElementById('form-loading');
+        const actions = document.getElementById('form-actions');
+
+        try {
+            const res = await fetch('/form', {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!res.ok) throw new Error('Errore nel caricamento');
+
+            const domande = await res.json();
+            loading.style.display = 'none';
+
+            if (!domande || domande.length === 0) {
+                content.innerHTML = '<p style="color:#555; text-align:center;">Nessuna domanda disponibile.</p>';
+                return;
+            }
+
+            // Raggruppa le domande in fieldset (opzionale: tutti in uno)
+            const fieldset = document.createElement('fieldset');
+            const legend   = document.createElement('legend');
+            legend.textContent = 'Questionario PCTO';
+            fieldset.appendChild(legend);
+
+            domande.forEach((dom, i) => {
+                fieldset.appendChild(buildField(dom, i + 1));
+            });
+
+            content.appendChild(fieldset);
+            actions.style.display = 'block'; // mostra il bottone submit
+
+        } catch (err) {
+            loading.textContent = 'Impossibile caricare il questionario. Riprova più tardi.';
+            loading.style.color = 'red';
+            console.error(err);
+        }
+    }
+
+    // Intercetta il submit e manda i dati come JSON
+    document.getElementById('pctoForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData  = new FormData(this);
+        const payload   = {};
+
+        // Gestisce checkbox multipli (array → stringa joined)
+        for (const [key, value] of formData.entries()) {
+            if (payload[key]) {
+                payload[key] += `, ${value}`; // unisce le checkbox
+            } else {
+                payload[key] = value;
+            }
+        }
+
+        try {
+            const res = await fetch('/student', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert('Questionario inviato con successo!');
+                this.reset();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert('Errore: ' + (data.error || 'Invio fallito.'));
+            }
+        } catch (err) {
+            alert('Errore di connessione al server.');
+        }
+    });
+
+    loadForm();
+    </script>
 </body>
 </html>

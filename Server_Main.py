@@ -13,10 +13,12 @@ def make_up():
         (r"/student",StudentHandler),
         (r"/newstudent",NewStudentHandler),
         (r"/form",FormHandler),
+        (r"/users", UserListHandler),
         (r"/frontend/(.*)", tornado.web.StaticFileHandler, {"path": "frontend"})
         ],
         debug = True,
         static_path = os.path.join(os.path.dirname(__file__), "frontend"),
+        cookie_secret = "utente_che_si_logga"
     )
 
 async def main(shutdown_event):

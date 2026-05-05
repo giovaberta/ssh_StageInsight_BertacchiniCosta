@@ -67,7 +67,7 @@
     </main>
 
     <script>
-        document.querySelector('.user-table').addEventListener('click', async function(e) {
+        /*document.querySelector('.user-table').addEventListener('click', async function(e) {
             if (e.target.classList.contains('delete-btn')) {
                 const row = e.target.closest('tr');
                 const email = row.querySelector('.user-email').textContent.trim();
@@ -92,7 +92,67 @@
                     alert("Errore di connessione al server.");
                 }
             }
-        });
+        });*/
+        const TYPE_LABELS = { 0: "Admin", 1: "Guest", 2: "Student" };
+
+        // Carica e renderizza gli utenti nella tabella
+        async function loadUsers() {
+            try {
+                const res = await fetch("/users", {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (!res.ok) throw new Error("Errore nel caricamento utenti");
+
+                const data = await res.json();
+                renderTable(data.users);
+
+            } catch (err) {
+                console.error("Errore:", err);
+            }
+        }
+
+        // Renderizza le righe della tabella
+        function renderTable(users) {
+            const tbody = document.querySelector("tbody");
+            tbody.innerHTML = ""; // svuota la tabella
+
+            users.forEach(u => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="user-email">${u.email}</td>
+                    <td>${u.type}</td>
+                    <td><button type="button" class="delete-btn" data-id="${u.id}">Elimina</button></td>
+                `;
+
+                // Listener sul bottone elimina
+                tr.querySelector(".delete-btn").addEventListener("click", () => deleteUser(u.id));
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Elimina un utente e ricarica la tabella
+        async function deleteUser(id) {
+            try {
+                const res = await fetch("/users", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id })
+                });
+
+                if (!res.ok) throw new Error("Errore durante l'eliminazione");
+
+                await loadUsers(); // ricarica la tabella dopo la cancellazione
+            } catch (err) {
+                console.error("Errore:", err);
+            }
+        }
+
+        // Aggiornamento automatico ogni 10 secondi
+        const POLLING_INTERVAL = 10000;
+        loadUsers();
+        setInterval(loadUsers, POLLING_INTERVAL);
     </script>
 </body>
 </html>

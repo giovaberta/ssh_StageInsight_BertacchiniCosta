@@ -14,4 +14,4 @@ form = db["form"] # Collezione dove si trovano le risposte ai vari form con rela
 
 port_listener = 8888
 
-Current_user = None
+#Current_user = None
