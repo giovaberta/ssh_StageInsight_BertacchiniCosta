@@ -1,4 +1,4 @@
-import tornado.web, hashlib
+import tornado.web, hashlib, json
 import sys , os
 from bson.objectid import ObjectId
 
@@ -94,41 +94,7 @@ class GuestHandler(BaseHandler):
 class StudentHandler(BaseHandler):
     def get(self):
         self.render("../frontend/user.html")
-    """
-    async def post(self):
-        self.set_header("Content-Type", "application/json")
 
-        user_id = self.get_current_user()
-        if user_id is None:
-            self.write_err("Unauthorized: user not logged in", 401)
-            return
-
-        Current_user = await user.find_one({"_id": ObjectId(user_id.decode())})
-        if Current_user is None:
-            self.write_err("User not found", 404)
-            return
-
-        keys = list(self.request.body_arguments.keys())
-        for key in keys:
-            arg = self.get_argument(key).strip()
-            print(arg)
-            if arg == "":
-                self.write_err(f"Missing value for argument '{key}'", 400)
-                return
-
-            question = await form.find_one({key: {"$exists": True}})
-            if question is None:
-                self.write_err(f"Question '{key}' not found", 404)
-                return
-
-            risp = await form.update_one(
-                {"_id": question["_id"]},
-                {"$set": {f"dati_ets.risp.{str(Current_user['_id'])}": arg}}
-            )
-            print(risp)
-
-        self.write_msg({"success": "Answers saved successfully"}, 200)
-    """
     async def post(self):
         self.set_header("Content-Type", "application/json")
 
@@ -186,17 +152,18 @@ class UserListHandler(BaseHandler):
 
             type_map = {0: "Admin", 1: "Guest", 2: "Student"}
 
-            risultato = [
-                {
+            risultato = []
+            for u in utenti:
+                risultato.append({
                     "id": str(u["_id"]),
                     "email": u["email"],
                     "type": type_map.get(int(u["type"]), "Unknown")
-                }
-                for u in utenti
-            ]
+                })
+
+
             self.write({"users": risultato})
         except Exception as ex:
-            self.write_err(str(ex))
+            self.write_err(ex)
 
     async def delete(self):
         self.set_header("Content-Type", "application/json")
@@ -231,10 +198,10 @@ class NewStudentHandler(BaseHandler):
         pass
 
 class FormHandler(BaseHandler):
-    def get(self):
+    async def get(self):
         # Se la richiesta vuole JSON (fetch dal JS), restituisce le domande
         if "application/json" in self.request.headers.get("Accept", ""):
-            self.get_questions()
+            await self.get_questions()
         else:
             self.render("../frontend/modificaquestionario.html")
 
@@ -245,18 +212,28 @@ class FormHandler(BaseHandler):
         if user_id is None:
             self.write_err("Unauthorized", 401)
             return
-
+        #print("DEBUG user_id:", user_id)
         try:
-            domande = await form.find().to_list(length=None)
-            risultato = [
-                {
-                    "testo_domanda": d.get("testo_domanda", ""),
-                    "tipo_risposta": d.get("tipo_risposta", "")
-                }
-                for d in domande
-            ]
-            self.write(risultato)
+            domande = form.find()
+            risultato = []
+            async for d in domande:
+                #print(d)
+                keys = d.keys()
+                print(list(keys)[1])
+                f = d[list(keys)[1]]
+                risultato.append(
+                    {
+                        "testo_domanda": d.get("testo_domanda", ""),
+                        "tipo_risposta": f["type"],
+                        "opzioni": f.get("possible_risp" ,[])
+                    })
+
+
+            print("DEBUG risultato:", risultato)
+            self.write(json.dumps(risultato))
+
         except Exception as ex:
+            print("DEBUG eccezione:", ex)
             self.write_err(str(ex))
 
     async def post(self):
