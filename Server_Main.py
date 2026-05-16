@@ -13,6 +13,7 @@ def make_up():
         (r"/student",StudentHandler),
         (r"/newstudent",NewStudentHandler),
         (r"/form",FormHandler),
+        (r"/form$(.*)",FormHandler),
         (r"/users", UserListHandler),
         (r"/frontend/(.*)", tornado.web.StaticFileHandler, {"path": "frontend"})
         ],

@@ -1,3 +1,4 @@
+<!-- Definitivo
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -47,6 +48,9 @@
                     <option value="menu_tendina">Menu a tendina (Select)</option>
                 </select>
 
+                <label for="testo_opzioni">Possibili risposte (Per scelte multiple/menu a tendina)</label>
+                <input type="text" id="testo_opzioni" name="testo_opzioni" placeholder="Scrivi le opzioni separate da un ;">
+
                 <button type="submit" class="btn-add">+ Salva Domanda nel Questionario</button>
             </form>
         </div>
@@ -62,7 +66,10 @@
                         <th>Azioni</th>
                     </tr>
                 </thead>
+
                 <tbody id="questionsTableBody">
+                -->
+                <!--
                     <tr><td>1</td><td class="q-text">Dati dell'ETS:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
                     <tr><td>2</td><td class="q-text">Dati dell'alunn*:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
                     <tr><td>3</td><td class="q-text">Se sei uno studente specifica il tuo percorso:</td><td>Testo Breve</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
@@ -92,6 +99,8 @@
                     <tr><td>27</td><td class="q-text">Quanto riesci a relazionarti con gli altri in classe e a lavorare in gruppo?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
                     <tr><td>28</td><td class="q-text">Quanto pensi di conoscere i tuoi bisogni e desideri?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
                     <tr><td>29</td><td class="q-text">Quanto ti senti supportato dalla tua famiglia?</td><td>Scala (Moltissimo-Poco)</td><td><button type="button" class="delete-btn">Elimina</button></td></tr>
+                -->
+                <!--
                 </tbody>
             </table>
         </div>
@@ -99,141 +108,79 @@
         <button type="button" class="btn-cancel" onclick="window.location.href='/admin'">Torna al Pannello Principale</button>
     </div>
 
-    <script>/*
-        const TIPO_LABEL = {
-            testo_breve:       "Testo Breve",
-            testo_lungo:       "Testo Lungo",
-            si_no:             "Sì / No",
-            scala_valutazione: "Scala (Moltissimo–Poco)",
-            scelta_multipla:   "Scelta Multipla (Checkbox)",
-            menu_tendina:      "Menu a tendina"
-        };
- 
-        function showError(msg) {
-            const div = document.getElementById('error-message');
-            div.textContent = msg;
-            div.style.display = 'block';
+    <script>
+        window.onload = function() {
+    // Esegue la chiamata fetch allo stesso URL della pagina corrente
+    fetch(window.location.href, {
+        headers: {
+            // Questo header dice a Python di eseguire "get_questions()" anziché il render
+            "Accept": "application/json"
         }
- 
-        function hideError() {
-            document.getElementById('error-message').style.display = 'none';
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Errore nel caricamento delle domande");
         }
- 
-        function buildRow(domanda, index) {
-            const tr = document.createElement('tr');
- 
-            const tdN = document.createElement('td');
-            tdN.textContent = index;
-            tr.appendChild(tdN);
- 
-            const tdTesto = document.createElement('td');
-            tdTesto.className = 'q-text';
-            tdTesto.textContent = domanda.testo_domanda;
-            tr.appendChild(tdTesto);
- 
-            const tdTipo = document.createElement('td');
-            tdTipo.className = 'q-tipo';
-            tdTipo.dataset.value = domanda.tipo_risposta;
-            tdTipo.textContent = TIPO_LABEL[domanda.tipo_risposta] || domanda.tipo_risposta;
-            tr.appendChild(tdTipo);
- 
-            const tdAzioni = document.createElement('td');
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'delete-btn';
-            btn.textContent = 'Elimina';
-            tdAzioni.appendChild(btn);
-            tr.appendChild(tdAzioni);
- 
-            return tr;
-        }
- 
-        function renumberRows() {
-            document.querySelectorAll('#questionsTableBody tr').forEach((row, i) => {
-                const firstCell = row.querySelector('td');
-                if (firstCell) firstCell.textContent = i + 1;
-            });
-        }
- 
-        async function loadQuestions() {
-            const tbody = document.getElementById('questionsTableBody');
-            try {
-                const response = await fetch('/form', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
- 
-                if (!response.ok) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="color:red;">Errore nel caricamento delle domande.</td></tr>';
-                    return;
-                }
- 
-                const domande = await response.json();
-                tbody.innerHTML = '';
- 
-                if (!domande || domande.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#555; font-style:italic;">Nessuna domanda presente.</td></tr>';
-                    return;
-                }
- 
-                domande.forEach((dom, i) => tbody.appendChild(buildRow(dom, i + 1)));
- 
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="4" style="color:red;">Impossibile connettersi al server.</td></tr>';
-            }
-        }
- 
-        document.getElementById('addQuestionForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            hideError();
- 
-            const testo_domanda = document.getElementById('testo_domanda').value.trim();
-            const tipo_risposta = document.getElementById('tipo_risposta').value;
- 
-            if (!testo_domanda) {
-                showError("Il testo della domanda non può essere vuoto.");
-                return;
-            }
- 
-            try {
-                const response = await fetch('/form', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ testo_domanda, tipo_risposta })
-                });
- 
-                if (response.ok) {
-                    const tbody = document.getElementById('questionsTableBody');
-                    const emptyRow = tbody.querySelector('td[colspan]');
-                    if (emptyRow) emptyRow.closest('tr').remove();
- 
-                    tbody.appendChild(buildRow({ testo_domanda, tipo_risposta }, tbody.querySelectorAll('tr').length + 1));
-                    e.target.reset();
-                } else {
-                    const data = await response.json().catch(() => ({}));
-                    showError("Errore: " + (data.error || "Impossibile salvare la domanda."));
-                }
-            } catch (err) {
-                showError("Errore di connessione al server.");
+        return response.json();
+    })
+    .then(domande => {
+        // Seleziona il corpo della tabella
+        const tbody = document.querySelector("#tabellaDomande tbody");
+        tbody.innerHTML = ""; // Svuota la tabella da eventuali residui
+
+        // Cicla l'array ricevuto dal backend
+        domande.forEach(domanda => {
+            const nuovaRiga = tbody.insertRow(-1);
+
+            // Colonna 1: Testo della domanda
+            const cellaTesto = nuovaRiga.insertCell(0);
+            cellaTesto.textContent = domanda.testo_domanda;
+
+            // Colonna 2: Tipo di risposta (es. text, radio, checkbox)
+            const cellaTipo = nuovaRiga.insertCell(1);
+            cellaTipo.textContent = domanda.tipo_risposta;
+
+            // Colonna 3: Opzioni (se presenti, unite da una virgola)
+            const cellaOpzioni = nuovaRiga.insertCell(2);
+            if (domanda.opzioni && domanda.opzioni.length > 0) {
+                cellaOpzioni.textContent = domanda.opzioni.join(", ");
+            } else {
+                cellaOpzioni.textContent = "-"; // Nessuna opzione (es. risposta testuale)
             }
         });
- 
+    })
+    .catch(error => {
+        console.error("Errore:", error);
+        alert("Impossibile caricare le domande del questionario.");
+    });
+};
+
+
+
+        // Gestione dinamica delle domande che vengono mostrate
+        const domande = await fetch('/form',{method:"POST", headers: {'Accept': 'application/json'}})
+        const table = document.getElementById('questionsTableBosy')
+
+
+
+
         document.getElementById('questionsTableBody').addEventListener('click', async function(e) {
             if (!e.target.classList.contains('delete-btn')) return;
- 
+
             const row = e.target.closest('tr');
             const testo_domanda = row.querySelector('.q-text').textContent.trim();
             const tipo_risposta = row.querySelector('.q-tipo').dataset.value;
- 
+
             if (!confirm(`Eliminare definitivamente questa domanda?\n\n"${testo_domanda}"`)) return;
- 
+
             try {
-                const response = await fetch('/form', {
+
+                const params = new URLSearchParams({ testo_domanda, tipo_risposta });
+                const response = await fetch(`/form?${params}`, {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ testo_domanda, tipo_risposta })
+                    headers: { 'Accept': 'application/json' }
                 });
- 
+
                 if (response.ok) {
                     row.remove();
                     renumberRows();
@@ -245,36 +192,145 @@
                 alert("Errore di connessione al server.");
             }
         });
- 
-        loadQuestions();*/
-    document.getElementById('questionsTableBody').addEventListener('click', async function(e) {
-        if (!e.target.classList.contains('delete-btn')) return;
+    </script>
+</body>
+</html>
+-->
 
-        const row = e.target.closest('tr');
-        const testo_domanda = row.querySelector('.q-text').textContent.trim();
-        const tipo_risposta = row.querySelector('.q-tipo').dataset.value;
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifica Questionario - PCTO</title>
+    <link rel="stylesheet" href="{{static_url('style.css')}}">
+    <style>
+        .question-container { max-width: 1000px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .form-section { margin-bottom: 30px; padding: 20px; background-color: #f1f8ff; border: 1px solid #cce5ff; border-radius: 5px; }
+        .form-section h3 { margin-top: 0; color: #0056b3; }
+        .form-section input, .form-section select, .form-section button { margin-bottom: 15px; width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-add { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { background-color: #218838; }
 
-        if (!confirm(`Eliminare definitivamente questa domanda?\n\n"${testo_domanda}"`)) return;
+        .list-section { max-height: 600px; overflow-y: auto; border: 1px solid #ddd; }
+        .question-table { width: 100%; border-collapse: collapse; background: white; }
+        .question-table th, .question-table td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; }
+        .question-table th { background-color: #007bff; color: white; position: sticky; top: 0; }
+        .question-table tr:nth-child(even) { background-color: #f9f9f9; }
+        .delete-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 3px; font-weight: bold; }
+        .delete-btn:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="question-container">
+        <h2>Gestione Domande Questionario PCTO</h2>
+        <p>Aggiungi o rimuovi le domande che compongono il questionario per l'Area Studente.</p>
 
-        try {
-            // FIX: parametri nell'URL per compatibilità con tornado.get_argument() in DELETE
-            const params = new URLSearchParams({ testo_domanda, tipo_risposta });
-            const response = await fetch(`/form?${params}`, {
-                method: 'DELETE',
-                headers: { 'Accept': 'application/json' }
-            });
+        <div class="form-section">
+            <h3>Aggiungi Nuova Domanda</h3>
+            <div id="error-message" style="color: red; margin-bottom: 10px; display: none;"></div>
 
-            if (response.ok) {
-                row.remove();
-                renumberRows();
-            } else {
-                const data = await response.json().catch(() => ({}));
-                alert("Errore durante l'eliminazione: " + (data.error || "Operazione fallita."));
+            <form id="addQuestionForm">
+                <label for="testo_domanda">Testo della Domanda:</label>
+                <input type="text" id="testo_domanda" name="testo_domanda" placeholder="Es: Come valuti l'organizzazione generale?" required>
+
+                <label for="tipo_risposta">Tipo di Risposta attesa:</label>
+                <select id="tipo_risposta" name="tipo_risposta" required>
+                    <option value="testo_breve">Testo Breve (Input)</option>
+                    <option value="testo_lungo">Testo Lungo (Textarea)</option>
+                    <option value="si_no">Scelta: Sì / No (Radio)</option>
+                    <option value="scala_valutazione">Scala: Moltissimo -> Poco per nulla</option>
+                    <option value="scelta_multipla">Scelta Multipla (Checkbox)</option>
+                    <option value="menu_tendina">Menu a tendina (Select)</option>
+                </select>
+
+                <label for="testo_opzioni">Possibili risposte (Per scelte multiple/menu a tendina)</label>
+                <input type="text" id="testo_opzioni" name="testo_opzioni" placeholder="Scrivi le opzioni separate da un ;">
+
+                <button type="submit" class="btn-add">+ Salva Domanda nel Questionario</button>
+            </form>
+        </div>
+
+        <h3>Domande Attuali nel Questionario</h3>
+        <div class="list-section">
+            <table class="question-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Testo Domanda</th>
+                        <th>Tipo Risposta</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="questionsTableBody">
+                    <!-- JavaScript caricherà le righe dinamicamente qui -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Funzione per caricare le domande dal backend Python
+        async function caricaDomande() {
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'GET',
+                    headers: {
+                        // Questo indica al Python handler di attivare get_questions()
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Errore server: ${response.status}`);
+                }
+
+                const domande = await response.json();
+                const tbody = document.getElementById('questionsTableBody');
+                tbody.innerHTML = ''; // Svuota la tabella prima di popolarla
+
+                // Cicla l'array strutturato dal tuo codice Python
+                domande.forEach((domanda, index) => {
+                    const riga = tbody.insertRow(-1);
+
+                    // 1. Colonna Numero Progressivo
+                    const cellaId = riga.insertCell(0);
+                    cellaId.textContent = index + 1;
+
+                    // 2. Colonna Testo Domanda
+                    const cellaTesto = riga.insertCell(1);
+                    cellaTesto.textContent = domanda.testo_domanda;
+                    cellaTesto.className = "q-text";
+
+                    // 3. Colonna Tipo Risposta
+                    const cellaTipo = riga.insertCell(2);
+                    cellaTipo.textContent = domanda.tipo_risposta;
+
+                    // 4. Colonna Azioni (Bottone Elimina)
+                    const cellaAzioni = riga.insertCell(3);
+                    const btnElimina = document.createElement('button');
+                    btnElimina.type = 'button';
+                    btnElimina.className = 'delete-btn';
+                    btnElimina.textContent = 'Elimina';
+
+                    // Listener temporaneo per l'eliminazione visiva
+                    btnElimina.onclick = function() {
+                        // Qui potrai inserire la fetch con metodo DELETE verso Python
+                        riga.remove();
+                    };
+                    cellaAzioni.appendChild(btnElimina);
+                });
+
+            } catch (error) {
+                console.error('Errore nel caricamento delle domande:', error);
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = 'Impossibile caricare le domande dal server.';
+                errorDiv.style.display = 'block';
             }
-        } catch (err) {
-            alert("Errore di connessione al server.");
         }
-    });
+
+        // Avvia il caricamento non appena la pagina è pronta
+        window.addEventListener('DOMContentLoaded', caricaDomande);
     </script>
 </body>
 </html>

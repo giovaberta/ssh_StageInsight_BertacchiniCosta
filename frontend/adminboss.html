@@ -8,7 +8,7 @@
 </head>
 <body>
     <header>
-        <h1>Area Admin Principale (Boss) - Gestione Completa</h1>
+        <h1>Area Admin Principale - Gestione Completa</h1>
         <nav>
             <a href="#gestione-utenti">Gestione Utenti</a>
             <a href="#statistiche">Statistiche</a>
@@ -49,11 +49,40 @@
             </table>
         </section>
 
+        <!--
         <section id="statistiche">
             <h2>Statistiche PCTO</h2>
             <p>Qui potrai visualizzare i grafici sulle valutazioni e i dati raccolti.</p>
             <div id="grafici-container" class="chart-area">
                 <p><em>[Area riservata ai grafici generati da JavaScript]</em></p>
+            </div>
+        </section>
+        -->
+
+        <section id="statistiche">
+            <h2>Statistiche PCTO</h2>
+            <p>Distribuzione delle risposte per ogni domanda del questionario.</p>
+
+            <!-- Filtri -->
+            <div class="filtri-wrapper">
+                <div class="filtro-gruppo">
+                    <label>Domanda</label>
+                    <select id="fil-domanda"><option value="">--seleziona--</option></select>
+                </div>
+                <button class="btn-applica-filtri" onclick="caricaStatistiche()">Applica filtri</button>
+            </div>
+
+            <!-- Metriche rapide -->
+            <div class="metriche-grid">
+                <div class="metrica-card">
+                    <div class="etichetta">Risposte totali</div>
+                    <div class="valore" id="m-risposte">—</div>
+                </div>
+            </div>
+
+            <!-- Grafici: uno per domanda -->
+            <div id="grafici-container" class="chart-area">
+                <div class="chart-stato"><span class="spinner-inline"></span>Caricamento grafici…</div>
             </div>
         </section>
 
@@ -153,6 +182,241 @@
         const POLLING_INTERVAL = 10000;
         loadUsers();
         setInterval(loadUsers, POLLING_INTERVAL);
+
+        // Prova grafici
+        /*
+      Scala fissa delle 4 opzioni di risposta, nell'ordine
+      in cui devono apparire nelle barre del grafico.
+    */
+    const SCALA = [
+        { label: "Moltissimo",     colore: "#0f6e56", alpha: "#0f6e5699" },
+        { label: "Molto",          colore: "#378add", alpha: "#378add99" },
+        { label: "Abbastanza",     colore: "#ba7517", alpha: "#ba751799" },
+        { label: "Poco per nulla", colore: "#d85a30", alpha: "#d85a3099" },
+    ];
+
+    const BASE_URL = '';   // stesso host Tornado; cambia se serve
+    let graficiInstanze = {};
+
+    function qs(id) { return document.getElementById(id); }
+
+    function valFiltri() {
+        return {
+            domanda: qs('fil-domanda').value || null,
+        };
+    }
+
+    function buildQuery(params) {
+        const q = Object.entries(params)
+            .filter(([, v]) => v !== null && v !== '')
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+            .join('&');
+        return q ? '?' + q : '';
+    }
+
+    async function apiFetch(endpoint, params = {}) {
+        const url = BASE_URL + endpoint + buildQuery(params);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Errore ${res.status}: ${res.statusText}`);
+        return res.json();
+    }
+
+    /*
+      GET /api/pcto/meta
+      Risposta attesa:
+      {
+        "anni":    ["2022/23", ...],
+        "classi":  ["3A", ...],
+        "aziende": ["Acme Srl", ...],
+        "domande": [
+          { "id": 1, "testo": "Hai imparato cose nuove durante il PCTO?" },
+          { "id": 2, "testo": "Il tutor aziendale ti ha seguito adeguatamente?" },
+          ...
+        ]
+      }
+    */
+    async function caricaMetaFiltri() {
+        try {
+            const meta = await apiFetch('/api/pcto/meta');
+            const selDom = qs('fil-domanda');
+            (meta.domande || []).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.testo.length > 65
+                    ? d.testo.slice(0, 62) + '…'
+                    : d.testo;
+                selDom.appendChild(opt);
+            });
+        } catch (e) {
+            console.warn('Metadati filtri non disponibili:', e.message);
+        }
+    }
+
+
+
+    /*
+      GET /api/pcto/statistiche?[filtri]
+      Risposta attesa:
+      {
+        "metriche": {
+          "totale_risposte":    240,
+          "totale_studenti":    60,
+          "totale_domande":     8,
+          "risposta_prevalente": "Molto"
+        },
+        "domande": [
+          {
+            "id": 1,
+            "testo": "Hai imparato cose nuove durante il PCTO?",
+            "risposte": {
+              "Moltissimo":     22,
+              "Molto":          18,
+              "Abbastanza":     12,
+              "Poco per nulla":  8
+            }
+          },
+          ...
+        ]
+      }
+    */
+    async function caricaStatistiche() {
+        const container = qs('grafici-container');
+        container.innerHTML = '<div class="chart-stato"><span class="spinner-inline"></span>Caricamento grafici…</div>';
+        distruggiGrafici();
+
+        try {
+            const dati = await apiFetch('/api/pcto/statistiche', valFiltri());
+            aggiornaMetriche(dati.metriche || {});
+            renderGrafici(dati.domande || []);
+        } catch (err) {
+            container.innerHTML = `<div class="chart-stato errore">
+                ⚠ Impossibile connettersi al server Tornado.<br>
+                <small>${err.message}</small>
+            </div>`;
+        }
+    }
+
+    /* ── Metriche rapide ── */
+    function aggiornaMetriche(m) {
+        qs('m-risposte').textContent   = m.totale_risposte    ?? '—';
+
+    }
+
+    /* ── Un grafico orizzontale per ogni domanda ── */
+    function renderGrafici(domande) {
+        const container = qs('grafici-container');
+        container.innerHTML = '';
+
+        if (!domande.length) {
+            container.innerHTML = '<div class="chart-stato">Nessun dato disponibile per i filtri selezionati.</div>';
+            return;
+        }
+
+        domande.forEach((dom, idx) => {
+            const chartId = `chart-dom-${idx}`;
+
+            const card = document.createElement('div');
+            card.className = 'grafico-card';
+            card.innerHTML = `
+                <div class="domanda-label">Domanda ${idx + 1}</div>
+                <div class="domanda-testo">${dom.testo}</div>
+                <div class="canvas-wrap">
+                    <canvas id="${chartId}" role="img"
+                        aria-label="Risposte: ${dom.testo}"></canvas>
+                </div>
+                <div class="legenda-scala" id="leg-${chartId}"></div>
+            `;
+            container.appendChild(card);
+
+            requestAnimationFrame(() => {
+                disegnaGrafico(chartId, dom.risposte);
+                // Legenda solo sul primo grafico
+                if (idx === 0) renderLegendaScala('leg-' + chartId);
+            });
+        });
+    }
+
+    /* ── Disegna il grafico a barre orizzontali per una domanda ── */
+    function disegnaGrafico(chartId, risposte) {
+        const valori  = SCALA.map(s => risposte[s.label] ?? 0);
+        const totale  = valori.reduce((a, b) => a + b, 0) || 1;
+
+        graficiInstanze[chartId] = new Chart(qs(chartId), {
+            type: 'bar',
+            data: {
+                labels: SCALA.map(s => s.label),
+                datasets: [{
+                    label: 'Risposte',
+                    data: valori,
+                    backgroundColor: SCALA.map(s => s.alpha),
+                    borderColor:     SCALA.map(s => s.colore),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const n   = ctx.raw;
+                                const pct = Math.round(n / totale * 100);
+                                return `  ${n} risposte  (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.06)' },
+                        ticks: {
+                            color: '#666',
+                            stepSize: 1,
+                            callback: v => Number.isInteger(v) ? v : ''
+                        },
+                        title: {
+                            display: true,
+                            text: 'Numero risposte',
+                            color: '#999',
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#333', font: { size: 13 } }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── Legenda colori scala ── */
+    function renderLegendaScala(legId) {
+        const el = qs(legId);
+        if (!el) return;
+        el.innerHTML = SCALA.map(s =>
+            `<span>
+                <span class="leg-sq" style="background:${s.colore}"></span>
+                ${s.label}
+            </span>`
+        ).join('');
+    }
+
+    function distruggiGrafici() {
+        Object.values(graficiInstanze).forEach(g => g.destroy());
+        graficiInstanze = {};
+    }
+
+    /* ── Avvio ── */
+    (async () => {
+        await caricaMetaFiltri();
+        await caricaStatistiche();
+    })();
     </script>
 </body>
 </html>

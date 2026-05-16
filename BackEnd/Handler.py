@@ -212,7 +212,7 @@ class FormHandler(BaseHandler):
         if user_id is None:
             self.write_err("Unauthorized", 401)
             return
-        #print("DEBUG user_id:", user_id)
+        
         try:
             domande = form.find()
             risultato = []
